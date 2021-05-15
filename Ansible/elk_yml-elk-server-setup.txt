@@ -1,0 +1,58 @@
+---
+  - name: Config elk VM with Docker
+    hosts: elk
+    remote_user: azureuser
+    become: true
+    tasks:
+
+    # install docker.io
+    - name: Install docker.io
+      apt:
+        force_apt_get: yes
+        update_cache: yes
+        name: docker.io
+        state: present
+
+    # install python3-pip
+    - name: Install pip
+      apt:
+        force_apt_get: yes
+        name: python3-pip
+        state: present
+
+    # install docker python pip module
+    - name: Install docker
+      pip:
+        name: docker
+        state: present
+
+    # increase memory
+    - name: Use more memory
+      sysctl:
+        name: vm.max_map_count
+        value: "262144"
+        state: present
+        reload: yes
+
+    # increase virtual memory on restart
+    - shell:
+        echo "vm.max_map_count=262144" >> /etc/sysctl.conf
+
+    # install sebp/elk:761 container
+    - name: Install and run a docker elk container
+      docker_container:
+        name: elk
+        image: sebp/elk:761
+        state: started
+        restart_policy: always
+        published_ports:
+          - 5601:5601
+          - 9200:9200
+          - 5044:5044
+
+    # enable service docker on boot
+    - name: Enable service docker on boot
+      systemd:
+        name: docker
+        enabled: yes
+
