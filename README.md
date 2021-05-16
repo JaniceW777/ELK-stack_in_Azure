@@ -46,13 +46,7 @@ The configuration details of each machine may be found below.
 The naming convention of "RedTeam" was used to indicate the scenario in which a company was preparing an environment for new pentesters to use.
 The size of each VM is included because the project was built within the parameters of using a free Azure account, which allows for up to 4 CPUs per region.
 
-Function	External IP Address	Internal IP Address	Operating System	Size
-Front door	104.42.6.112	10.0.0.4	Linux	1 cpu, 2 ram
-VM	none	10.0.0.5	Linux	1 cpu, 2 ram
-VM	none	10.0.0.6	Linux	1 cpu, 2 ram
-redundancy	none	10.0.0.7	Linux	1 cpu, 2 ram
-availability, access control	104.210.37.86	n/a	Linux	n/a
-monitoring	168.61.214.10	10.1.0.4	Linux	2 cpu, 8 ram
+
 ![image](https://user-images.githubusercontent.com/75222720/118380147-a2c94080-b5ad-11eb-83b4-3ba49b993bb2.png)
 
 
