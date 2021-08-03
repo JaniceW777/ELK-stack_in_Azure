@@ -1,4 +1,4 @@
-# cyber-repo
+# ELK-stack_in_Azure
 This repository is designed to share my Automated ELK Stack Deployment, 
 created as a project for cyber boot camp.
 The files in this repository were used to configure the network depicted below.
@@ -103,4 +103,89 @@ Navigate to http://<Public-IP of Your ELK Server>:5601/app/kibana to check that 
 
 WALKTHROUGH OF THE STEPS TO CREATE THE NETWORK
 
---coming soon!--
+Log into your Azure portal.
+Add a Resource Group, naming it something like, “RedTeam-Resource-Group.” You’ll need to select a region, such as “West US.” Remember your region.
+Add a Virtual Network, naming it something like “RedTeam-VNet1.” Make a note of the IP Address space (such as 10.0.0.0/16) and the subnet default (such as 10.0.0.0/24).
+Create a Network Security Group, naming it something like “RedTeam-NSG.”
+From within your NSG, create an inbound rule that does not allow any inbound IP addresses on any ports to go to any destinations or any ports. Name it “Default-Deny.” When you  look at the list of rules, there will be 3 that Azure puts in automatically, plus your Default-Deny rule. There will be a triangle warning next to your rule that you can ignore.
+In your Terminal, create your SSH key by running the command ssh-keygen. Cat the file where the public key is stored and save it to a text file.
+Back in Azure, create a Virtual Machine (VM). 
+ On the Basics tab:
+Select your resource group
+be sure to select the same region you selected in Step 2.
+name the VM something like Jump-Box-Provisioner. This will serve as a gateway VM.
+Select a size: If you are using a free Azure account, you’ll be limited to a total of 4 CPUs over all your VMs. A good one for this is B1_ms, which has 1 CPU and 2 RAM. 
+Authentication section: choose “SSH public key,” input a user name you will remember, and  then paste the public key you created in your terminal.
+On the Networking tab:
+ Choose your Virtual Network and subnet.
+In the Public IP section, select “Create new” so you can select “static.”
+At NIC Network Security Group, select “Advanced” so you can choose the NSG you created in Step 4.
+Select Review + create, then wait for the approval, then create.
+Create two more virtual machines, the process is similar to Step 7 but not exactly. You will create them one at a time:
+On the Basics tab:
+Select your resource group
+be sure to select the same region you selected in Steps 2 and 7.
+Name the VMs Web-1 and Web-2.
+Select size: B1_ms, which has 1 CPU, 2 RAM
+Authentication section: choose “SSH public key,” input the user name you used for Step 7, and  then paste the public key you created in your terminal.
+On the Networking tab:
+ Choose your Virtual Network and subnet.
+In the Public IP section, select “None.”
+At NIC Network Security Group, select “Advanced” so you can choose the NSG you created in Step 4.
+Set up Jump-Box Administration: 
+There is definitely a step needed here, like click on this VM
+Create a rule, number it 100, Allow SSH from my network. (You’ll need your host computer’s IP address, which you can get from whatsmyip.org or Settings>Wifi>Properties
+Install docker.io on Jump-Box and install Ansible container.
+Need instrux for these steps
+Probably two steps
+Make a note of the container’s name and ID. (Command to see running containers.) 
+Create NSG rule to allow the Jump Box “full access” to Vnet.
+Set up My Provisioner, part 1. “Launch a new VM from the Azure portal that can only be accessed using a new SSH key from the container running inside my Jump Box.” Use the following commands:
+sudo docker start <container name>
+sudo docker attach <container name>
+ssh-keygen from within the Ansible container  (you know you are in the container by the command prompt)
+Go to the Web-1 VM and the Web-2 VM and “Reset password” (lefthand menu), using the new key you just created.
+Check the connections by running ssh <yourusername>@<Web-1IP> and ssh <yourusername>@<Web-2IP>
+exit
+nano /etc/ansible/hosts: 
+uncomment the line [webservers]
+Add the IP addresses for Web-1 and Web-2
+Insert the line for python after each one
+Save and close
+Nano /etc/ansible/ansible.cfg:
+Uncomment the line [webservers]
+Replace “root” with your user name
+Confirm the changes you just made: ansible  -m ping all
+You should get ping and pong
+Set up My Provisioner, Part 2.
+Create a YAML file to install docker.io (we called it pentest.yml)
+ssh to Web-1 and run ansible-playbook /etc/ansible/pentest.yml
+Test it by running curl localhost/setup.php
+Exit, ssh to Web-2 and run the same two commands.
+Set up Load Balancer (LB).
+Give it a basic sku, a static public IP address, and name the IP address RedTeam-LB-IP
+Add a health probe (insert details)
+Create a backend pool, add Web-1 and Web-2 (insert details)
+Configure the LB and NSG to expose port 80 to an external IP that’s being used to test the setup:
+Load balancing rule (name: Pentest LBR):
+TCP/80:80/Client IP & Protocol. (This forwards port 80 traffic from the LB to the Vnet)
+NSG rule (name: Port 80): Allow port 80 traffic from external IP to Vnet
+Delete “Default-Deny” rule
+Verify in browser with http://<LB public IP>/setup.php
+Build a redundancy VM.
+Name: Web-3-redundancy
+Location: US West
+Size: B1ms (1 CPU, 2G RAM)
+No public IP
+NIC, Red Team Availability set
+Test the connection by running these commands: 
+ping <IP address>
+ssh <yourusername>@<IP address>
+Exit
+Add the IP to hosts file
+Test with the command: ansible -m ping all
+Run: ansible-playbook /etc/ansible/pentest.yml
+Test one more time:
+ssh <yourusername>@<IP address>
+Curl localhost/setup.php
+
